@@ -2,26 +2,32 @@ import React, {useState} from 'react'
 import {SafeAreaView, Image, TextInput, StyleSheet, View, FlatList, Button, Text, TouchableHighlight} from 'react-native'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters'; 
 
-const PlateSelectionBoxes = ({myplateBox, setSelectNrPlates, addCalcPlate})=>{
+const PlateSelectionBoxes = ({myplateBox, SelectedPlates, addCalcPlate})=>{
   let [nrPlates, setnrPlates] = addCalcPlate //The Plates that going to be used to calculate
   let clickedEffect = myplateBox.pressed ? {width:37, height:37, borderColor:'black', borderRadius:13, borderWidth:2} : ""
   let styleArr = [style.btnPlate, {backgroundColor:myplateBox.color}, clickedEffect]
+  let [setSelectNrPlates, selectNrPlates] = SelectedPlates
 
   function platePress(NrPressed, changeFunction) {
-    //myPlateBox === NrPressed  && changeFunction === setSelectNrPlates
-    changeFunction(value => value.map(plate => {
-      if(plate.nr === NrPressed.nr){ 
-        plate.pressed = !NrPressed.pressed
-      }
-      return plate
-    }))
-  
+    //NrPressed === myPlateBox && changeFunction === setSelectNrPlates
+    // If i add then delet then add again plate i get an false array (bug)
+    console.log(NrPressed);
+    let copyArr = [...selectNrPlates]
+    let index = copyArr.findIndex(item => item.nr === NrPressed.nr)
+    copyArr[index].pressed = !NrPressed.pressed
+    changeFunction(copyArr)
+    
+
     if(NrPressed.pressed){
       setnrPlates(value => [...value, NrPressed])
+      setnrPlates(value => value.sort((a, b) => b.nr - a.nr))
     }
-    else{
-      setnrPlates(plates2Calc => plates2Calc.map(plate => plate.kg !== NrPressed.kg))
+    else if(NrPressed.pressed === false){
+      //Problem lays here: when we take away a plate it returns false and adds fale to the nrPlates array 
+      setnrPlates(plates2Calc => plates2Calc.filter(plate => plate.nr !== NrPressed.nr))
     }
+    console.log('Current plates Selected State:');
+    console.log(nrPlates);
   }
 
   return(
@@ -42,7 +48,7 @@ export default function SelectPlates({myFunc}) {
         <FlatList
           horizontal={true}
           data={selectNrPlates}
-          renderItem={({item}) => <PlateSelectionBoxes myplateBox={item} setSelectNrPlates={setSelectNrPlates} addCalcPlate={[nrPlates, setnrPlates]} />}
+          renderItem={({item}) => <PlateSelectionBoxes myplateBox={item} SelectedPlates={[setSelectNrPlates, selectNrPlates]} addCalcPlate={[nrPlates, setnrPlates]} />}
           keyExtractor={(item, index)=> index.toString()}
         />
       </View>
